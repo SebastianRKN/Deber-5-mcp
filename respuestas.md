@@ -1,47 +1,48 @@
-# MCP Detective — Sebastián Rosero
+# Deber 5 — MCP Detective
+
+**Estudiante:** Sebastián Rosero  
+**Materia:** Programación Asistida de Aplicaciones · USFQ
 
 ## 1. Arquitectura
 
-El LLM interpreta los eventos y propone herramientas y argumentos. El host (Codex) coordina la sesión; su cliente MCP descubre las herramientas y envía las llamadas por stdio. El intérprete de Python ejecuta el proceso del servidor MCP: este lee los casos, valida las entradas y registra alertas en memoria. El LLM no ejecuta esas validaciones por sí solo.
+El LLM analiza lo que recibe y decide qué herramienta MCP necesita utilizar. El host o harness (en este caso, Codex para la implementación) mantiene la conversación y coordina las acciones. El cliente MCP descubre las herramientas, envía argumentos por `stdio` y entrega las respuestas al host. El servidor MCP es el proceso de **Python** que realmente consulta los casos, valida las entradas y guarda las alertas en memoria. El modelo propone acciones, pero no reemplaza la ejecución ni las validaciones del servidor.
 
 ## 2. Evidencia
 
-INC-003 contiene cuatro LOGIN_FAILED de admin entre 03:00 y 03:03 y un LOGIN_SUCCESS a las 03:04, todos desde 192.0.2.50 en panel_administracion. El patrón justifica una alerta alta y revisar si el acceso estaba autorizado. Los eventos no identifican a la persona ni prueban una intrusión: también podrían reflejar intentos legítimos con una contraseña equivocada. Esta explicación se apoya en los datos revisados durante la implementación y las pruebas, no se presenta como una investigación completada por un agente en sesión nueva.
+En `INC-003` aparecen cuatro intentos fallidos de `admin` a las 03:00, 03:01, 03:02 y 03:03, seguidos por un inicio de sesión exitoso a las 03:04. Todos corresponden a la IP `192.0.2.50` y al `panel_administracion`. Vale la pena investigar quién inició la sesión y si estaba autorizado. Aun así, no alcanza para afirmar que hubo una intrusión: también podría ser una persona autorizada que se equivocó varias veces al escribir su contraseña.
 
 ## 3. Validación y seguridad
 
-El servidor rechaza casos inexistentes, niveles distintos de bajo/medio/alto, motivos no textuales o en blanco y alertas duplicadas. La lógica utiliza ValueError. En MCP 2.3.0, las tools traducen esas excepciones a ToolError para comunicar su mensaje al cliente. No basta confiar en el modelo: puede producir argumentos incorrectos. El servidor aplica las reglas de forma determinista antes de modificar el estado.
+Las entradas inválidas las rechaza el **servidor MCP**. Primero, la lógica Python usa `ValueError` cuando no existe el caso, el nivel está fuera de `bajo`/`medio`/`alto`, el motivo está vacío o la alerta ya existe. Las tools traducen esos errores a `ToolError` para que el cliente y el agente reciban un fallo claro. No es suficiente confiar en el LLM: puede escribir un identificador inexistente o argumentos incorrectos. La validación tiene que funcionar aunque el modelo se equivoque.
 
-## Instalación e Inspector
+## Agente utilizado
 
-Requisitos: Python >=3.11 y Node.js con npx. Desde la raíz:
+Se utilizó **Codex** para la implementación del proyecto. La comunicación real con el servidor se comprobó de manera reproducible mediante un cliente MCP por `stdio` en `mcp-detective/verificar_mcp.py` y con MCP Inspector CLI en `mcp-detective/verificar_inspector.sh`. Esta prueba descubre las tres tools, ejecuta D1–D7 en un mismo proceso cuando corresponde y verifica el reinicio de memoria. No equivale a la investigación de los incidentes con un LLM: para demostrar esa parte, se requiere una sesión nueva del agente y su traza visible de llamadas MCP.
+
+## Instalación y pruebas
+
+Requisitos: Python 3.11 o superior, Node.js y `npx` para Inspector. Desde la raíz del repositorio:
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate
 python -m pip install -r requirements.txt
-pytest mcp-detective -q
+python -m pytest mcp-detective -q
+python mcp-detective/verificar_mcp.py
 mcp dev mcp-detective/server.py
 ```
 
-En Windows, activar con `.venv\Scripts\Activate.ps1` en PowerShell.
+En Windows PowerShell, para activar el entorno se usa `.venv\Scripts\Activate.ps1`; en Linux/macOS, `source .venv/bin/activate`. `mcp dev` abre Inspector, donde pueden descubrirse y ejecutarse las herramientas. Para probar alertas duplicadas, repetir la misma llamada dentro del proceso; para probar el reinicio, detener el servidor, iniciarlo otra vez y volver a registrar la alerta.
 
-Descubrir las tres tools y ejecutar D1–D7 de la consigna. Para verificar la memoria, repetir una alerta en el mismo proceso (debe fallar), terminar el servidor y el Inspector, volver a ejecutar mcp dev y repetirla (debe funcionar). Una conexión nueva no demuestra por sí sola un reinicio.
+## Conectar el servidor a Codex
 
-## Agente y conexión
-
-Agente de implementación: Codex. Host previsto para la investigación: Codex CLI, en sesión nueva. Registrar el servidor usando rutas absolutas:
+La ruta del servidor y la del intérprete Python deben ser absolutas. En Linux/macOS, desde la raíz del repositorio, un ejemplo es:
 
 ```bash
-codex mcp add centinela -- /ruta/absoluta/.venv/bin/python /ruta/absoluta/mcp-detective/server.py
+codex mcp add centinela -- "$(pwd)/.venv/bin/python" "$(pwd)/mcp-detective/server.py"
 ```
 
-Después, iniciar una sesión nueva y pedir discovery, listar_casos, consultar_eventos para cada caso, una alerta justificada para INC-003 y consultar_eventos para INC-999. Durante esa investigación queda prohibido leer casos.json directamente. La conexión se debe demostrar con las llamadas MCP, sus argumentos y resultados.
+En Windows, utilizar las rutas absolutas equivalentes de `.venv\Scripts\python.exe` y `mcp-detective\server.py`. Abrir una **conversación nueva** del agente, descubrir las tools MCP y pedirle que liste los casos, consulte los eventos de los tres incidentes, registre una alerta justificada para `INC-003` y consulte `INC-999`. Durante esa investigación no se debe leer `casos.json` por ningún otro medio.
 
-La sesión nueva se intentó durante este trabajo, pero falló por autenticación caducada antes de realizar la investigación. Por tanto, esa conexión y la investigación no se certifican como completadas.
+## Resultados reproducibles
 
-## Verificación y procedencia de imágenes
-
-Se ejecutaron las 9 pruebas del ZIP con el SDK oficial MCP 2.3.0: 9 passed. Posteriormente se probaron mejoras locales con 12 pruebas, D1–D7 en Inspector y un reinicio real; esos cambios y capturas nuevas quedaron en un entorno que perdió conexión. Esta publicación conserva el código y las 9 pruebas del ZIP, no atribuye las 12 pruebas a esta versión.
-
-Las cinco imágenes de evidencias/ se recuperaron sin modificar del ZIP suministrado. Son material de origen, no capturas nuevas certificadas por esta publicación. Las imágenes revisadas del Inspector y del agente presentan resultados recompuestos y no sustituyen las capturas de interfaz exigidas por la consigna. Sigue pendiente sustituirlas por capturas originales verificables y completar la investigación del agente.
+El flujo de [GitHub Actions](https://github.com/SebastianRKN/Deber-5-mcp/actions) ejecutó con Python 3.12 el proyecto publicado: **9 pruebas pytest aprobadas**, **D1–D7 aprobados mediante cliente MCP real por stdio** y **reinicio de memoria aprobado**. El SDK MCP por `stdio` aprobó el discovery, D1–D7 y el reinicio. MCP Inspector CLI verificó discovery, D1, D2, D3, D4, D6 y D7; D5, que requiere conservar el mismo proceso, quedó verificado por el cliente MCP. La ejecución y los resultados JSON de Inspector están disponibles en [GitHub Actions](https://github.com/SebastianRKN/Deber-5-mcp/actions/runs/42336500738). Los archivos de evidencia están en `evidencias/`. Para cumplir la parte de investigación con un agente, la captura correspondiente debe mostrar llamadas reales con sus argumentos y resultados.

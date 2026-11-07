@@ -1,0 +1,37 @@
+name: Verificacion Deber 5 MCP
+
+on:
+  push:
+    branches: [deber5]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+      - name: Preparar Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Preparar Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Instalar dependencias
+        run: python -m pip install -r requirements.txt
+      - name: Ejecutar pruebas pytest
+        run: python -m pytest mcp-detective -q
+      - name: Probar MCP stdio, D1-D7 y reinicio
+        run: python mcp-detective/verificar_mcp.py
+      - name: Ejecutar MCP Inspector CLI
+        run: bash mcp-detective/verificar_inspector.sh
+      - name: Guardar resultados reales de Inspector
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-inspector-mcp
+          path: inspector-resultados/
+          if-no-files-found: ignore
