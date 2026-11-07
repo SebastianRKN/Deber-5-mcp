@@ -63,4 +63,4 @@ Configura el host MCP con la ruta absoluta del intérprete Python y de `mcp-dete
 
 ## Entrega
 
-[Pull request #1: `deber5` hacia `main`](../../pull/1). Se conserva abierto para evaluación.
+[Pull request #2: `deber5` hacia `main`](https://github.com/SebastianRKN/Deber-5-mcp/pull/2). Se mantiene abierto para evaluación.
