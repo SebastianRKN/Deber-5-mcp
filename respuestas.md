@@ -17,7 +17,7 @@ Las entradas inválidas las rechaza el **servidor MCP**. Primero, la lógica Pyt
 
 ## Agente utilizado
 
-Se utilizó **Codex** para la implementación del proyecto. La comunicación real con el servidor se comprobó de manera reproducible mediante un cliente MCP por `stdio` en `mcp-detective/verificar_mcp.py`. Esta prueba descubre las tres tools, ejecuta D1–D7 en un mismo proceso cuando corresponde y verifica el reinicio de memoria. No equivale a la investigación de los incidentes con un LLM: para demostrar esa parte, se requiere una sesión nueva del agente y su traza visible de llamadas MCP.
+Se utilizó **Codex** para la implementación del proyecto. La comunicación real con el servidor se comprobó de manera reproducible mediante un cliente MCP por `stdio` en `mcp-detective/verificar_mcp.py` y con MCP Inspector CLI en `mcp-detective/verificar_inspector.sh`. Esta prueba descubre las tres tools, ejecuta D1–D7 en un mismo proceso cuando corresponde y verifica el reinicio de memoria. No equivale a la investigación de los incidentes con un LLM: para demostrar esa parte, se requiere una sesión nueva del agente y su traza visible de llamadas MCP.
 
 ## Instalación y pruebas
 
@@ -45,4 +45,4 @@ En Windows, utilizar las rutas absolutas equivalentes de `.venv\Scripts\python.e
 
 ## Resultados reproducibles
 
-El flujo de [GitHub Actions](https://github.com/SebastianRKN/Deber-5-mcp/actions) ejecutó con Python 3.12 el proyecto publicado: **9 pruebas pytest aprobadas**, **D1–D7 aprobados mediante cliente MCP real por stdio** y **reinicio de memoria aprobado**. La ejecución queda registrada en [este run](https://github.com/SebastianRKN/Deber-5-mcp/actions/runs/42336264418). Los archivos de evidencia están en `evidencias/`. Para cumplir la parte de investigación con un agente, la captura correspondiente debe mostrar llamadas reales con sus argumentos y resultados.
+El flujo de [GitHub Actions](https://github.com/SebastianRKN/Deber-5-mcp/actions) ejecutó con Python 3.12 el proyecto publicado: **9 pruebas pytest aprobadas**, **D1–D7 aprobados mediante cliente MCP real por stdio** y **reinicio de memoria aprobado**. El SDK MCP por `stdio` aprobó el discovery, D1–D7 y el reinicio. MCP Inspector CLI verificó discovery, D1, D2, D3, D4, D6 y D7; D5, que requiere conservar el mismo proceso, quedó verificado por el cliente MCP. La ejecución y los resultados JSON de Inspector están disponibles en [GitHub Actions](https://github.com/SebastianRKN/Deber-5-mcp/actions/runs/42336500738). Los archivos de evidencia están en `evidencias/`. Para cumplir la parte de investigación con un agente, la captura correspondiente debe mostrar llamadas reales con sus argumentos y resultados.
