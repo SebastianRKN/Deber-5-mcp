@@ -12,6 +12,7 @@ Servidor MCP en Python para investigar los incidentes simulados del sistema Cent
 - [Casos](mcp-detective/casos.json): datos del enunciado.
 - [Pruebas pytest](mcp-detective/test_server.py): reglas y validaciones.
 - [Verificación MCP stdio](mcp-detective/verificar_mcp.py): descubrimiento, D1–D7 y reinicio de memoria.
+- [Inspector CLI](mcp-detective/verificar_inspector.sh): pruebas de descubrimiento y ejecución desde Inspector.
 - [Respuestas](respuestas.md): arquitectura, análisis, seguridad e instrucciones.
 - [Evidencias](evidencias/): cinco archivos solicitados.
 - [GitHub Actions](.github/workflows/verificacion.yml): ejecuta las pruebas automáticamente.
@@ -48,7 +49,13 @@ También hay ejecuciones automatizadas en [GitHub Actions](../../actions).
 mcp dev mcp-detective/server.py
 ```
 
-En Inspector se descubren las tres herramientas y se ejecutan D1–D7. La prueba D5 requiere repetir el registro en **el mismo proceso**. Para comprobar el reinicio hay que cerrar el servidor, iniciarlo de nuevo y repetir el registro.
+Para verificar también el Inspector de forma automática en Linux o en GitHub Actions:
+
+```bash
+bash mcp-detective/verificar_inspector.sh
+```
+
+El resultado real se puede consultar en [esta ejecución](https://github.com/SebastianRKN/Deber-5-mcp/actions/runs/42336500738), que adjunta los JSON del Inspector. En Inspector gráfico se descubren las tres herramientas y se ejecutan D1–D7. La prueba D5 requiere repetir el registro en **el mismo proceso**. Para comprobar el reinicio hay que cerrar el servidor, iniciarlo de nuevo y repetir el registro.
 
 ## Investigación desde Codex
 
